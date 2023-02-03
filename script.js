@@ -95,6 +95,7 @@ const labelSumIn = document.querySelector(".summary__value--in");
 const labelSumOut = document.querySelector(".summary__value--out");
 const labelSumInterest = document.querySelector(".summary__value--interest");
 const labelTimer = document.querySelector(".timer");
+const labelLoan = document.querySelector(".operation--loan h2");
 
 const containerApp = document.querySelector(".app");
 const containerMovements = document.querySelector(".movements");
@@ -156,6 +157,27 @@ const formatCurrency = function (value, locale, currency) {
   }).format(value);
 };
 
+const startLogoutTimer = function () {
+  let time = 120;
+  const tick = function () {
+    const min = String(Math.trunc(time / 60)).padStart(2, 0);
+    const sec = String(Math.trunc(time % 60)).padStart(2, 0);
+
+    labelTimer.textContent = `${min}:${sec}`;
+    if (time <= 0) {
+      clearInterval(timer);
+      labelWelcome.textContent = "Log in to get started";
+      containerApp.style.opacity = 0;
+      currentAccount = null;
+    }
+    time--;
+  };
+
+  tick();
+  const timer = setInterval(tick, 1000);
+  return timer;
+};
+
 /**
  * Showing every account movement in the UI
  * @param {object} account - account object
@@ -194,6 +216,7 @@ const displayMovements = function (account, sort = false) {
     </div>
     `;
 
+    // inserting content into the DOM
     containerMovements.insertAdjacentHTML("afterbegin", html);
   });
 };
@@ -278,13 +301,7 @@ const updateUI = function (account) {
 
 // Buttons functionality
 /* ================ Login button functionality ================ */
-let currentAccount;
-
-// FAKE FORCE LOGIN (DELETE LATER) ~~~~~
-currentAccount = account1;
-updateUI(currentAccount);
-containerApp.style.opacity = 1;
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+let currentAccount, timer;
 
 btnLogin.addEventListener("click", function (e) {
   e.preventDefault();
@@ -319,6 +336,10 @@ btnLogin.addEventListener("click", function (e) {
     labelWelcome.textContent = `Welcome back ${
       currentAccount.owner.split(" ")[0]
     }`;
+
+    // starting logout timer
+    if (timer) clearInterval(timer);
+    timer = startLogoutTimer();
 
     // showing the UI
     containerApp.style.opacity = 1;
@@ -356,6 +377,10 @@ btnTransfer.addEventListener("click", function (e) {
 
     // recalculating data and updating UI
     updateUI(currentAccount);
+
+    // restarting timer
+    clearInterval(timer);
+    timer = startLogoutTimer();
   }
 
   // clearing and unfocusing inputs
@@ -373,19 +398,30 @@ btnLoan.addEventListener("click", function (e) {
     amount > 0 &&
     currentAccount.movements.some(movement => movement >= amount * 0.1)
   ) {
-    // adding date of operation to account object
-    currentAccount.movementsDates.push(new Date().toISOString());
+    labelLoan.textContent += " (Waiting for approval) 🔃";
+    // adding delay for fake approval
+    setTimeout(() => {
+      // adding date of operation to account object
+      currentAccount.movementsDates.push(new Date().toISOString());
 
-    // Add loan to the account movements
-    currentAccount.movements.push(amount);
+      // Add loan to the account movements
+      currentAccount.movements.push(amount);
 
-    // Recalculate data and update the UI
-    updateUI(currentAccount);
+      // changing label to default
+      labelLoan.textContent = "Request loan";
+
+      // Recalculate data and update the UI
+      updateUI(currentAccount);
+    }, 2500);
   }
 
   // clearing and unfocusing inputs
   inputLoanAmount.value = "";
   inputLoanAmount.blur();
+
+  // restarting timer
+  clearInterval(timer);
+  timer = startLogoutTimer();
 });
 
 /* ================ Close account button functionality ================ */
