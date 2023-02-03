@@ -157,13 +157,23 @@ const formatCurrency = function (value, locale, currency) {
   }).format(value);
 };
 
+/**
+ * Starts the timer for auto log out from the account
+ * @returns timer
+ */
 const startLogoutTimer = function () {
+  // setting the amount of time for log out
   let time = 120;
+
+  // creating separate function to call it immediately
   const tick = function () {
+    // transforming time in seconds to the (minutes:seconds)
     const min = String(Math.trunc(time / 60)).padStart(2, 0);
     const sec = String(Math.trunc(time % 60)).padStart(2, 0);
 
     labelTimer.textContent = `${min}:${sec}`;
+
+    // checking if timer run out
     if (time <= 0) {
       clearInterval(timer);
       labelWelcome.textContent = "Log in to get started";
